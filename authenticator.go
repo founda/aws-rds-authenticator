@@ -16,7 +16,7 @@ type option func(*authenticator) error
 type authenticator struct {
 	output           io.Writer
 	host             string
-	port             string
+	port             int
 	region           string
 	user             string
 	database         string
@@ -53,7 +53,7 @@ func FromArgs(args []string) option {
 		fset := flag.NewFlagSet("aws-rds-authenticator", flag.ExitOnError)
 
 		hostPtr := fset.String("host", "", "Endpoint of the database instance")
-		portPtr := fset.String("port", "5432", "Port number used for connecting to your DB instance")
+		portPtr := fset.Int("port", 5432, "Port number used for connecting to your DB instance")
 		regionPtr := fset.String("region", "", "AWS Region where the database instance is running")
 		userPtr := fset.String("user", "", "Database account that you want to access")
 		databasePtr := fset.String("database", "", "Database that you want to access")
@@ -95,7 +95,7 @@ func WithAuthTokenBuilder(authTokenBuilder authtoken.Builder) option {
 }
 
 func (a authenticator) PrintConnectionString() error {
-	endpoint := fmt.Sprintf("%s:%s", a.host, a.port)
+	endpoint := fmt.Sprintf("%s:%v", a.host, a.port)
 
 	token, err := a.authTokenBuilder.BuildToken(context.TODO(), endpoint, a.region, a.user)
 	if err != nil {
