@@ -13,6 +13,7 @@ type TokenBuilder struct {
 func NewMockTokenBuilder() *TokenBuilder {
 	m := new(TokenBuilder)
 	m.On("BuildToken", context.TODO(), "rds.amazon.com:5432", "eu-west-1", "postgres").Return("t0k3n", nil)
+	m.On("BuildToken", context.TODO(), "rds.amazon.com:3306", "eu-west-1", "maria").Return("t0k3n", nil)
 
 	return m
 }

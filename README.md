@@ -2,8 +2,6 @@
 
 `aws-rds-authenticator` is a command-line tool that enables users to generate a temporary password for a database user while leveraging the [AWS RDS IAM Authentication](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html) feature. This feature provides an additional layer of security by enabling users to authenticate with AWS Identity and Access Management (IAM) instead of using a password-based approach. With `aws-rds-authenticator`, users can easily connect to their database instances using their IAM credentials rather than directly providing database passwords. This tool simplifies the process and can be particularly useful for Kubernetes users working with [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
-**Note:** This tool is currently only compatible with PostgreSQL. Contributions are welcome to add support for MySQL.
-
 ## Usage
 
 ```bash
@@ -11,10 +9,12 @@ $ aws-rds-authenticator -help
 Usage of aws-rds-authenticator:
   -database string
         Database that you want to access
+  -engine string
+        Database engine that you want to access: postgres|mysql (default "postgres")
   -host string
         Endpoint of the database instance
   -port int
-        Port number used for connecting to your DB instance (default 5432)
+        Port number used for connecting to your DB instance (default postgres: 5432, default mysql: 3306)
   -region string
         AWS Region where the database instance is running
   -user string
@@ -24,7 +24,7 @@ Usage of aws-rds-authenticator:
 For example, if you want to connect to a PostgreSQL database instance running in the `us-east-1` region, you can use the following command:
 
 ```bash
-$ aws-rds-authenticator -host <instance-endpoint> -port 5432 -user <db-user> -database <db-name> -region us-east-1
+$ aws-rds-authenticator -engine postgres -host rds.amazon.com -port 5432 -user postgres -database prod-db -region us-east-1
 <temporary-password>
 ```
 
