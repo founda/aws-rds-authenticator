@@ -21,7 +21,6 @@ type authenticator struct {
 	user             string
 	database         string
 	authTokenBuilder authtoken.Builder
-	credentials      authtoken.CredentialsProvider
 }
 
 func NewAuthenticator(opts ...option) (authenticator, error) {
@@ -98,7 +97,7 @@ func WithAuthTokenBuilder(authTokenBuilder authtoken.Builder) option {
 func (a authenticator) PrintConnectionString() error {
 	endpoint := fmt.Sprintf("%s:%s", a.host, a.port)
 
-	token, err := a.authTokenBuilder.BuildAuthToken(context.TODO(), endpoint, a.region, a.user, a.credentials)
+	token, err := a.authTokenBuilder.BuildToken(context.TODO(), endpoint, a.region, a.user)
 	if err != nil {
 		return err
 	}
@@ -108,8 +107,15 @@ func (a authenticator) PrintConnectionString() error {
 }
 
 func PrintConnectionString() {
+	tokenBuilder, err := authtoken.NewRDSTokenBuilder(context.TODO())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	auth, err := NewAuthenticator(
 		FromArgs(os.Args[1:]),
+		WithAuthTokenBuilder(tokenBuilder),
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -122,16 +128,3 @@ func PrintConnectionString() {
 		os.Exit(1)
 	}
 }
-
-//func foo(provider aws.CredentialsProvider) {
-//	awsCfg, err := config.LoadDefaultConfig(context.TODO())
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	authenticationToken, err := auth.BuildAuthToken(
-//		context.TODO(), os.Getenv("PG_HOST")+":5432", os.Getenv("REGION"), os.Getenv("PG_USER"), awsCfg.Credentials)
-//	if err != nil {
-//		panic(err)
-//	}
-//}
