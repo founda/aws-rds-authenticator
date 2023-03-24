@@ -51,7 +51,7 @@ $ docker build -t aws-rds-authenticator:latest --target=alpine .
 The following targets are available:
 
 * `alpine`
-* `debian`
+* `bullseye`
 * `scratch`
 
 The default target is `alpine`.
