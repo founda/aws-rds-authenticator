@@ -6,55 +6,62 @@ import (
 
 	authenticator "github.com/founda/aws-rds-authenticator"
 	"github.com/founda/aws-rds-authenticator/pkg/authtoken/mock"
+	"github.com/google/go-cmp/cmp"
 )
 
-func TestPrintsConnectionStringToWriterPostgres(t *testing.T) {
-	t.Parallel()
-	fakeTerminal := &bytes.Buffer{}
-	args := []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-database", "prod-test"}
+func TestPrintsConnectionStringToWriter(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "postgres with database name",
+			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-database", "prod-test"},
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432/prod-test",
+		},
+		{
+			name: "postgres without database name",
+			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1"},
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432/",
+		},
+		{
+			name: "mysql with database name",
+			args: []string{"-engine", "mysql", "-host", "rds.amazon.com", "-user", "maria", "-region", "eu-west-1", "-database", "prod-test"},
+			want: "maria:t0k3n@tcp(rds.amazon.com:3306)/prod-test?tls=true&allowCleartextPasswords=true",
+		},
+		{
+			name: "mysql without database name",
+			args: []string{"-engine", "mysql", "-host", "rds.amazon.com", "-user", "maria", "-region", "eu-west-1"},
+			want: "maria:t0k3n@tcp(rds.amazon.com:3306)/?tls=true&allowCleartextPasswords=true",
+		},
+	}
 
-	mockTokenBuilder := mock.NewMockTokenBuilder()
-	auth, err := authenticator.NewAuthenticator(
-		authenticator.WithOutput(fakeTerminal),
-		authenticator.FromArgs(args),
-		authenticator.WithAuthTokenBuilder(mockTokenBuilder),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = auth.PrintConnectionString()
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := "postgres://postgres:t0k3n@rds.amazon.com:5432/prod-test"
-	got := fakeTerminal.String()
-	if want != got {
-		t.Errorf("want %q, got %q", want, got)
-	}
-}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fakeTerminal := &bytes.Buffer{}
 
-func TestPrintsConnectionStringToWriterMySQL(t *testing.T) {
-	t.Parallel()
-	fakeTerminal := &bytes.Buffer{}
-	args := []string{"-engine", "mysql", "-host", "rds.amazon.com", "-user", "maria", "-region", "eu-west-1", "-database", "prod-test"}
+			mockTokenBuilder := mock.NewMockTokenBuilder()
+			auth, err := authenticator.NewAuthenticator(
+				authenticator.WithOutput(fakeTerminal),
+				authenticator.FromArgs(tt.args),
+				authenticator.WithAuthTokenBuilder(mockTokenBuilder),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = auth.PrintConnectionString()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	mockTokenBuilder := mock.NewMockTokenBuilder()
-	auth, err := authenticator.NewAuthenticator(
-		authenticator.WithOutput(fakeTerminal),
-		authenticator.FromArgs(args),
-		authenticator.WithAuthTokenBuilder(mockTokenBuilder),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = auth.PrintConnectionString()
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := "maria:t0k3n@tcp(rds.amazon.com:3306)/prod-test?tls=true&allowCleartextPasswords=true"
-	got := fakeTerminal.String()
-	if want != got {
-		t.Errorf("want %q, got %q", want, got)
+			got := fakeTerminal.String()
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("PrintConnectionString() mismatch (-want +got):\n%s", diff)
+			}
+		})
 	}
 }
 
@@ -80,11 +87,6 @@ func TestMissingRequiredArgs(t *testing.T) {
 			name: "missing region",
 			args: []string{"-host", "host", "-user", "user", "-database", "db"},
 			want: "missing required region",
-		},
-		{
-			name: "missing database",
-			args: []string{"-host", "host", "-user", "user", "-region", "eu-west-1"},
-			want: "missing required database",
 		},
 		{
 			name: "incorrect engine",

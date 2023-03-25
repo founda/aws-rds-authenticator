@@ -75,9 +75,6 @@ func FromArgs(args []string) option {
 		if *userPtr == "" {
 			return errors.New("missing required user")
 		}
-		if *databasePtr == "" {
-			return errors.New("missing required database")
-		}
 		if *enginePtr == "" {
 			return errors.New("missing required engine")
 		}
