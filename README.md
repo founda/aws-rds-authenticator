@@ -1,6 +1,19 @@
 <badges>
 
-`aws-rds-authenticator` is a command-line tool that enables users to generate a temporary password for a database user while leveraging the [AWS RDS IAM Authentication](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html) feature. This feature provides an additional layer of security by enabling users to authenticate with AWS Identity and Access Management (IAM) instead of using a password-based approach. With `aws-rds-authenticator`, users can easily connect to their database instances using their IAM credentials rather than directly providing database passwords. This tool simplifies the process and can be particularly useful for Kubernetes users working with [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+`aws-rds-authenticator` is a command-line tool that enables users to generate a temporary password for a database
+user while leveraging the [AWS RDS IAM Authentication](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/
+UsingWithRDS.IAMDBAuth.html) feature. This feature provides an additional layer of security by enabling users to
+authenticate with AWS Identity and Access Management (IAM) instead of using a password-based approach. With `aws-rds-
+authenticator`, users can easily connect to their database instances using their IAM credentials rather than directly
+providing database passwords. This tool simplifies the process and can be particularly useful for Kubernetes users
+working with [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-
+accounts.html).
+
+## Why
+
+The AWS CLI image is big (~125MB) and slow. Pulling and running that image multiple times per day is a waste of resources,
+especially for something as trivial as database authentication. Our goal is to make an image under 10MB to fulfil
+the same requirement.
 
 ## Usage
 
@@ -32,7 +45,10 @@ $ aws-rds-authenticator -engine postgres -host rds.amazon.com -port 5432 -user p
 
 aws-rds-authenticator employs the AWS credentials provider chain by default to authenticate with AWS.
 
-If you're working with Kubernetes, you can use the [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) feature to authenticate with AWS. EKS will automatically insert the `AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` environment variables into the pod when the `eks.amazonaws.com/role-arn` annotation is configured on it.
+If you're working with Kubernetes, you can use the [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/
+userguide/iam-roles-for-service-accounts.html) feature to authenticate with AWS. EKS will automatically insert the
+`AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` environment variables into the pod when the `eks.amazonaws.com/role-
+arn` annotation is configured on it.
 
 ## Build
 
@@ -51,10 +67,10 @@ $ docker build -t aws-rds-authenticator:latest --target=alpine .
 The following targets are available:
 
 * `alpine`
-* `debian`
+* `bullseye`
 * `scratch`
 
-The default target is `alpine`.
+The default target is `scratch`.
 
 We also provide pre-built images on GitHub Container Registry:
 
@@ -64,25 +80,104 @@ $ docker run --rm -it ghcr.io/founda/aws-rds-authenticator:latest -help
 
 The following tags are available:
 
-* `latest`: Latest stable release, built on Debian Linux
+* `latest`: Latest stable release, built on scratch
 * `latest-alpine`: Latest stable release, built on Alpine Linux
-* `latest-debian`: Latest stable release, built on Debian Linux
-* `latest-scratch`: Latest stable release, built on scratch
+* `latest-bullseye`: Latest stable release, built on Debian Linux
 
-All version tags are available as well (e.g. `v1.0.0`, `v1.0.0-debian`, and `v1.0.0-alpine`).
+All version tags are available as well (e.g. `1.0.0`, `1.0.0-bullseye`, and `1.0.0-alpine`).
+
+The images are available as linux/amd64 and linux/arm64.
 
 ### Using the Docker image
 
-We recommend using the Docker image as a stage in a multi-stage build. This way, you can build your application and copy the binary to a minimal image.
+We recommend using the Docker image as a stage in a multi-stage build. This way, you can build your application and copy
+the binary to a minimal image.
 
 ```dockerfile
 FROM ghcr.io/founda/aws-rds-authenticator:latest-alpine AS aws-rds-authenticator
 COPY --from=aws-rds-authenticator /workspace/aws-rds-authenticator ./aws-rds-authenticator
 ```
 
+### Prepared client images
+
+We also provide prepared client images that expose an authenticated database client:
+
+* [founda/aws-rds-authenticator-postgres](https://github.com/founda/aws-rds-authenticator/pkgs/container/aws-rds-authenticator-postgres)
+* [founda/aws-rds-authenticator-mysql](https://github.com/founda/aws-rds-authenticator/pkgs/container/aws-rds-authenticator-mysql).
+
+```bash
+$ docker pull ghcr.io/founda/aws-rds-authenticator-postgres:latest
+$ docker pull ghcr.io/founda/aws-rds-authenticator-mysql:latest
+```
+
+These client images require the same variables as the aws-rds-authenticator.
+
+**postgres client entrypoint**
+
+```shell
+Usage: ./entrypoint.sh [OPTIONS] [QUERY]
+
+  Options:
+    -create-db  Create the database if it does not exist
+
+  Environment variables:
+    PG_HOST     PostgreSQL server host name or IP address
+    PG_PORT     PostgreSQL server port number
+    PG_USER     PostgreSQL username
+    PG_DATABASE PostgreSQL database name
+    AWS_REGION  AWS region where the RDS instance is located
+
+  Examples:
+    ./entrypoint.sh "SELECT * FROM my_table"
+    ./entrypoint.sh -create-db "SELECT * FROM my_table"
+```
+
+**mysql client entrypoint**
+
+```shell
+Usage: ./entrypoint.sh [OPTIONS] [QUERY]
+
+  Options:
+    -create-db  Create the database if it does not exist
+
+  Environment variables:
+    MYSQL_HOST      MySQL server host name or IP address
+    MYSQL_PORT      MySQL server port number
+    MYSQL_USER      MySQL username
+    MYSQL_DATABASE  MySQL database name
+    AWS_REGION      AWS region where the RDS instance is located
+
+  Examples:
+    ./entrypoint.sh "SELECT * FROM my_table"
+    ./entrypoint.sh -create-db "SELECT * FROM my_table"
+```
+
+### Image size
+
+```bash
+ghcr.io/founda/aws-rds-authenticator-mysql      1.0.0            18MB
+ghcr.io/founda/aws-rds-authenticator-postgres   1.0.0            10.7MB
+ghcr.io/founda/aws-rds-authenticator            1.0.0            5.43MB
+ghcr.io/founda/aws-rds-authenticator            1.0.0-alpine     8.69MB
+ghcr.io/founda/aws-rds-authenticator            1.0.0-bullseye   51.5MB  
+
+# for reference:
+amazon/aws-cli                                  latest           124MB
+```
+
+## Alternative
+
+You can also use:
+
+```shell
+$ aws rds generate-db-auth-token -hostname my-db-instance.123456789012.us-east-1.rds.amazonaws.com -port 5432 -region us-east-1 -username my-db-username
+```
+
 ## Contributing
 
-Bug reports, and pull requests are welcome on GitHub. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports, and pull requests are welcome on GitHub. This project is intended to be a safe, welcoming space for
+collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org)
+code of conduct.
 
 ## License
 
