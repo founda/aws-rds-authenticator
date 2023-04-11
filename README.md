@@ -1,13 +1,12 @@
 <badges>
 
 `aws-rds-authenticator` is a command-line tool that enables users to generate a temporary password for a database
-user while leveraging the [AWS RDS IAM Authentication](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/
-UsingWithRDS.IAMDBAuth.html) feature. This feature provides an additional layer of security by enabling users to
-authenticate with AWS Identity and Access Management (IAM) instead of using a password-based approach. With `aws-rds-
-authenticator`, users can easily connect to their database instances using their IAM credentials rather than directly
+user while leveraging the [AWS RDS IAM Authentication](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html)
+feature. This feature provides an additional layer of security by enabling users to
+authenticate with AWS Identity and Access Management (IAM) instead of using a password-based approach. With `aws-rds-authenticator`,
+users can easily connect to their database instances using their IAM credentials rather than directly
 providing database passwords. This tool simplifies the process and can be particularly useful for Kubernetes users
-working with [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-
-accounts.html).
+working with [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
 ## Why
 
@@ -45,10 +44,9 @@ $ aws-rds-authenticator -engine postgres -host rds.amazon.com -port 5432 -user p
 
 aws-rds-authenticator employs the AWS credentials provider chain by default to authenticate with AWS.
 
-If you're working with Kubernetes, you can use the [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/
-userguide/iam-roles-for-service-accounts.html) feature to authenticate with AWS. EKS will automatically insert the
-`AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` environment variables into the pod when the `eks.amazonaws.com/role-
-arn` annotation is configured on it.
+If you're working with Kubernetes, you can use the [IAM for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+feature to authenticate with AWS. EKS will automatically insert the `AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` environment variables into the pod when the
+`eks.amazonaws.com/role-arn` annotation is configured on it.
 
 ## Build
 
