@@ -7,10 +7,19 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+# Note: we _have_ to run on `push` instead of `pull_request`. When using `pull_request` the branch used is not
+# the source branch you've used locally, but a "virtual" branch (in the form of `refs/pull/<id>/merge`) that
+# contains the result of the actual merge. The logic inside semantic-release does not allow you to configure
+# this branch, that is, as this branch is not present as a remote head (remember the "virtual") so it is filtered
+# out. The direct consequence is that semantic-release does not consider the current branch to be configured and
+# aborts. Just to reiterate: semantic-release looks at the remote heads, so configuring `refs/pull/<id>/merge` as
+# a branch does not solve the problem: that branch will never exist as a remote head.
+# The filtering on branches happens here:
+# https://github.com/semantic-release/semantic-release/blob/4bddb37de2fc6743a82299e277d5852d153e2ba8/index.js#L69
+# And the remote heads lookup happens here:
+# https://github.com/semantic-release/semantic-release/blob/4bddb37de2fc6743a82299e277d5852d153e2ba8/lib/git.js#L67
 on:
   push:
-    branches: [ "main" ]
-  pull_request:    
 
 jobs:
   format:
@@ -71,7 +80,7 @@ jobs:
         run: |
           go install golang.org/x/tools/cmd/goimports@latest
           test -z "$(goimports -local founda.com -l .)"
-          
+
   tidy:
     runs-on: ubuntu-latest
     steps:
@@ -115,35 +124,73 @@ jobs:
           version: "2023.1.3"
           install-go: false
 
+  version:
+    runs-on: ubuntu-latest
+    # Map a step output to a job output, see:
+    # https://stackoverflow.com/a/61236803
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+      - name: Install dependencies
+        run: |
+          npm i -g \
+            semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git
+      - name: Get latest version
+        id: version
+        run: |
+          semantic-release --dry-run --branches main,${{ github.ref_name }} --no-ci --debug
+          cat version.env >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.FOUNDA_DEV_PAT }}
+          GIT_AUTHOR_NAME: "Founda Automation"
+          GIT_AUTHOR_EMAIL: "automation@founda.dev"
+          GIT_COMMITTER_NAME: "Founda Automation"
+          GIT_COMMITTER_EMAIL: "automation@founda.dev"
+
   test:
     runs-on: ubuntu-latest
+    # Test Report needs to be able to update checks, see:
+    # https://github.com/mikepenz/action-junit-report#pr-run-permissions
+    permissions:
+      checks: write
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 1
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
-    # Use the go version as specified in the go.mod, using the latest available
-    # patch release, see:
-    # https://github.com/actions/setup-go#getting-go-version-from-the-gomod-file
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version-file: "./go.mod"
-        cache-dependency-path: go.sum
+      # Use the go version as specified in the go.mod, using the latest available
+      # patch release, see:
+      # https://github.com/actions/setup-go#getting-go-version-from-the-gomod-file
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "./go.mod"
+          cache-dependency-path: go.sum
 
-    - name: Install dependencies
-      run: go get .
+      - name: Install dependencies
+        run: go get .
 
-    - name: Test with Go
-      run: |
-        go install github.com/jstemmer/go-junit-report/v2@latest
-        go test -v ./... | go-junit-report -iocopy -out report.xml -set-exit-code
+      - name: Test with Go
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          go test -v ./... | go-junit-report -iocopy -out report.xml -set-exit-code
 
-    - name: Publish Test Report
-      uses: mikepenz/action-junit-report@v3
-      if: always()
-      with:
-        report_paths: report.xml
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: always()
+        with:
+          report_paths: report.xml
 
   docker-build:
     runs-on: ubuntu-latest
@@ -156,6 +203,7 @@ jobs:
       - goimports
       - tidy
       - staticcheck
+      - version
       - test
     strategy:
       matrix:
@@ -182,10 +230,20 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # We will create a latest tag by default, and will add the suffix to latest as well, the `onlatest=true`.
+          # See: https://github.com/marketplace/actions/docker-metadata-action#flavor-input.
+          flavor: |
+            # Configure the global suffix
+            suffix=${{ fromJSON(format('["-{0}",""]', matrix.target))[matrix.target == 'scratch'] }},onlatest=true
+          # Configure a tag of type semver, by default this would get the tag value from git, but as
+          # we haven't created a release yet, we specify the value explicitly.
+          # See: https://github.com/marketplace/actions/docker-metadata-action#typesemver.
+          # Note that for branch builds, we add the branch name in the tag as well, to avoid overwriting images.
+          # And we can't negate the `{{is_default_branch}}` expression, so we have to perform the "not default branch"
+          # check explicitly.
           tags: |
-            # set latest tag for default branch
-            type=raw,value=latest${{ fromJSON(format('["-{0}",""]', matrix.target))[matrix.target == 'scratch'] }},enable={{is_default_branch}}
-            type=raw,value=1.0.0${{ fromJSON(format('["-{0}",""]', matrix.target))[matrix.target == 'scratch'] }}
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }},enable={{is_default_branch}}
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ github.ref_name != github.event.repository.default_branch }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -205,9 +263,10 @@ jobs:
       packages: write
     needs:
       - docker-build
+      - version
     strategy:
       matrix:
-        target: ["postgres", "mysql"]
+        target: [ "postgres", "mysql" ]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -230,18 +289,62 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.target }}
+          # Configure a tag of type semver, by default this would get the tag value from git, but as
+          # we haven't created a release yet, we specify the value explicitly.
+          # See: https://github.com/marketplace/actions/docker-metadata-action#typesemver.
+          # Note that for branch builds, we add the branch name in the tag as well, to avoid overwriting images.
+          # And we can't negate the `{{is_default_branch}}` expression, so we have to perform the "not default branch"
+          # check explicitly.
           tags: |
-            # set latest tag for default branch
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=1.0.0
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }},enable={{is_default_branch}}
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ github.ref_name != github.event.repository.default_branch }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: ./clients/${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
-          build-args: VERSION=1.0.0
+          build-args: VERSION=${{ needs.version.outputs.version }}${{ fromJSON(format('["-{0}",""]', github.ref_name))[github.ref_name == github.event.repository.default_branch] }}
           push: true
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  release:
+    runs-on: ubuntu-latest
+    # Semantic-release need the following permissions:
+    # - content:write in order to create releases
+    # - issues:write in order to post issue comments and add labels
+    # - pull_requests:write to post PR comments and add labels
+    # see: https://github.com/semantic-release/semantic-release/issues/2469#issuecomment-1158013884
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    needs:
+      - docker-build-clients
+    if: github.ref_name == github.event.repository.default_branch
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+      - name: Install dependencies
+        run: |
+          npm i -g \
+            semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git
+      - name: Release new version
+        run: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.FOUNDA_DEV_PAT }}
+          GIT_AUTHOR_NAME: "Founda Automation"
+          GIT_AUTHOR_EMAIL: "automation@founda.dev"
+          GIT_COMMITTER_NAME: "Founda Automation"
+          GIT_COMMITTER_EMAIL: "automation@founda.dev"
