@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/founda/aws-rds-authenticator/compare/v1.0.0...v1.1.0) (2023-04-22)
+
+
+### Features
+
+* enable Dependabot ([d40ddd0](https://github.com/founda/aws-rds-authenticator/commit/d40ddd00bc7885a2c9ba43fbce953b274473711a)), closes [/github.com/dependabot/dependabot-core/issues/3253#issuecomment-852541544](https://github.com//github.com/dependabot/dependabot-core/issues/3253/issues/issuecomment-852541544)
+
 # 1.0.0 (2023-04-22)
 
 
