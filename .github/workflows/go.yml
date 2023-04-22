@@ -20,8 +20,21 @@ env:
 # https://github.com/semantic-release/semantic-release/blob/4bddb37de2fc6743a82299e277d5852d153e2ba8/lib/git.js#L67
 on:
   push:
+  workflow_run:
+    workflows: [ "Dependabot PR" ]
+    types:
+      - completed
 
 jobs:
+  # This job only runs if this workflow is triggered by Dependabot, in that case we make
+  # sure the triggering workflow 'Dependabot PR' completed successfully. That should
+  # always be the case, if not, something is seriously wrong.
+  check-result-dependabot-pr:
+    runs-on: ubuntu-latest
+    if: ${{ (github.event_name == 'workflow_run') && (github.event.workflow_run.conclusion == 'failure') }}
+    steps:
+      - run: echo "The 'Dependabot PR' workflow failed, this should never happen" && exit 1
+
   format:
     runs-on: ubuntu-latest
     steps:
@@ -250,7 +263,8 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: true
+          # Skip pushing images for workflows triggered by Dependabot.
+          push: ${{ github.event_name != 'workflow_run' }}
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -305,7 +319,8 @@ jobs:
           context: ./clients/${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
           build-args: VERSION=${{ needs.version.outputs.version }}${{ fromJSON(format('["-{0}",""]', github.ref_name))[github.ref_name == github.event.repository.default_branch] }}
-          push: true
+          # Skip pushing images for workflows triggered by Dependabot.
+          push: ${{ github.event_name != 'workflow_run' }}
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

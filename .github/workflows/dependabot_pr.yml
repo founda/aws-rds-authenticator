@@ -1,0 +1,24 @@
+# This workflow is activated when Dependabot creates a pull request (PR).
+# However, GitHub's security model restricts workflows triggered by Dependabot
+# from accessing any secrets. Furthermore, the GITHUB_TOKEN can only be used
+# in read-only mode. To work around this, we need to split the workflow into
+# two parts, see:
+# https://github.com/dependabot/dependabot-core/issues/3253#issuecomment-852541544.
+# This workflow will trigger our main workflow via a `workflow_run` event. This
+# approach will grant our main workflow access to repository secrets as described in
+# the GitHub docs:
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+#   The workflow started by the workflow_run event is able to access secrets and write tokens,
+#   even if the previous workflow was not. This is useful in cases where the previous workflow
+#   is intentionally not privileged, but you need to take a privileged action in a later workflow.
+
+name: Dependabot PR
+on:
+  pull_request
+
+jobs:
+  check-dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - run: echo "PR created by Dependabot"
