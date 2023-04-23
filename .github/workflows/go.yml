@@ -158,12 +158,18 @@ jobs:
             semantic-release \
             @semantic-release/changelog \
             @semantic-release/exec \
-            @semantic-release/git
+            @semantic-release/git \
+            conventional-changelog-conventionalcommits
       - name: Get latest version
         id: version
+        if: ${{ (github.event_name != 'workflow_run') }}
         run: |
-          semantic-release --dry-run --branches main,${{ github.ref_name }} --no-ci --debug
-          cat version.env >> $GITHUB_OUTPUT
+          if ${{ (github.event_name != 'workflow_run') }}; then
+            semantic-release --dry-run --branches main,${{ github.ref_name }} --no-ci --debug
+            cat version.env >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=0.0.0" >> $GITHUB_OUTPUT  
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.FOUNDA_DEV_PAT }}
           GIT_AUTHOR_NAME: "Founda Automation"
