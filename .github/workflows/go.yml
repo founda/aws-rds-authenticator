@@ -360,7 +360,8 @@ jobs:
             semantic-release \
             @semantic-release/changelog \
             @semantic-release/exec \
-            @semantic-release/git
+            @semantic-release/git \
+            conventional-changelog-conventionalcommits
       - name: Release new version
         run: semantic-release
         env:
