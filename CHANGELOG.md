@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/founda/aws-rds-authenticator/compare/v1.1.0...v1.1.1) (2023-04-24)
+
+
+### Bug Fixes
+
+* include Dependabot dependency updates in semantic-release ([42cffec](https://github.com/founda/aws-rds-authenticator/commit/42cffec26876b3603fdb12bbaeb9479dcd35adeb)), closes [/mattbun.io/posts/semantic-release-dependabot/#approach-2](https://github.com/founda//mattbun.io/posts/semantic-release-dependabot//issues/approach-2)
+* return dummy version in Dependabot PRs ([0b26170](https://github.com/founda/aws-rds-authenticator/commit/0b26170da6e30be21c3de8fea462fd82c95025dd))
+
 # [1.1.0](https://github.com/founda/aws-rds-authenticator/compare/v1.0.0...v1.1.0) (2023-04-22)
 
 
