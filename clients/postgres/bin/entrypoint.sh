@@ -53,7 +53,8 @@ PG_DSN="$(/workspace/bin/aws-rds-authenticator -engine postgres -host "$PG_HOST"
 
 # Create the database if option is specified
 if [ "$1" = "-create-db" ]; then
-  echo "SELECT 'CREATE DATABASE $PG_DATABASE' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$PG_DATABASE');" | psql "$PG_DSN"
+  # see: https://stackoverflow.com/a/18389184
+  echo "SELECT 'CREATE DATABASE $PG_DATABASE' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$PG_DATABASE')\gexec" | psql "$PG_DSN"
   shift
 fi
 
