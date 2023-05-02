@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/founda/aws-rds-authenticator/compare/v1.1.1...v1.1.2) (2023-05-02)
+
+
+### Bug Fixes
+
+* **pgclient:** add missing gexec ([b1d9bb9](https://github.com/founda/aws-rds-authenticator/commit/b1d9bb9945496f3de7b666b1de0e86af7bf720df))
+
 ## [1.1.1](https://github.com/founda/aws-rds-authenticator/compare/v1.1.0...v1.1.1) (2023-04-24)
 
 
