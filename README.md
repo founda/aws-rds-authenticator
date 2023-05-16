@@ -20,17 +20,25 @@ the same requirement.
 $ aws-rds-authenticator -help
 Usage of aws-rds-authenticator:
   -database string
-        Database that you want to access
+      Database that you want to access (optional)
   -engine string
-        Database engine that you want to access: postgres|mysql (default "postgres")
+      Database engine that you want to access: postgres|mysql (default "postgres")
   -host string
-        Endpoint of the database instance
+      Endpoint of the database instance
   -port int
-        Port number used for connecting to your DB instance (default postgres: 5432, default mysql: 3306)
+      Port number used for connecting to your DB instance
+            default postgres: 5432
+            default mysql: 3306
   -region string
-        AWS Region where the database instance is running
+      AWS Region where the database instance is running
+  -root-cert-file string
+      Path to the root certificate file
+  -ssl-mode string
+      SSL mode to connect to the database instance.
+            postgres: disable|require|verify-ca|verify-full (default: verify-ca)
+            mysql: DISABLED|PREFERRED|REQUIRED|VERIFY_CA (default: VERIFY_CA)
   -user string
-        Database account that you want to access
+      Database account that you want to access
 ```
 
 For example, if you want to connect to a PostgreSQL database instance running in the `us-east-1` region, you can use the following command:
@@ -124,6 +132,9 @@ Usage: ./entrypoint.sh [OPTIONS] [QUERY]
     PG_USER     PostgreSQL username
     PG_DATABASE PostgreSQL database name
     AWS_REGION  AWS region where the RDS instance is located
+    PG_SSL_MODE (optional) PostgreSQL SSL mode (default: verify-ca)
+    PG_SSL_CA   (optional) PostgreSQL SSL CA certificate file path (required if PG_SSL_MODE is verify-ca or verify-full)
+
 
   Examples:
     ./entrypoint.sh "SELECT * FROM my_table"
