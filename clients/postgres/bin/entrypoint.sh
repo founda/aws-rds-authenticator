@@ -15,6 +15,8 @@ if [ $# -eq 0 ]; then
     PG_USER     PostgreSQL username
     PG_DATABASE PostgreSQL database name
     AWS_REGION  AWS region where the RDS instance is located
+    PG_SSL_MODE (optional) PostgreSQL SSL mode (default: verify-ca)
+    PG_SSL_CA   (optional) PostgreSQL SSL CA certificate file path (required if PG_SSL_MODE is verify-ca or verify-full)
 
   Examples:
     ./entrypoint.sh \"SELECT * FROM my_table\"
@@ -45,11 +47,32 @@ if [ -z "$PG_HOST" ] || [ -z "$PG_PORT" ] || [ -z "$AWS_REGION" ] || [ -z "$PG_U
   if [ -z "$AWS_REGION" ]; then
     echo "  AWS_REGION"
   fi
+
+  # if PG_SSL_MODE is not set, default to verify-ca
+  if [ -z "$PG_SSL_MODE" ]; then
+    PG_SSL_MODE="verify-ca"
+  fi
+
+  # if PG_SSL_MODE is verify-ca or verify-full, PG_SSL_CA is required
+  if [ "$PG_SSL_MODE" = "verify-ca" ] || [ "$PG_SSL_MODE" = "verify-full" ]; then
+    if [ -z "$PG_SSL_CA" ]; then
+      echo "  PG_SSL_CA"
+    fi
+  fi
+
   exit 1
 fi
 
 # Authenticate with AWS RDS and get the PostgreSQL DSN
-PG_DSN="$(/workspace/bin/aws-rds-authenticator -engine postgres -host "$PG_HOST" -port "$PG_PORT" -region "$AWS_REGION" -user "$PG_USER")"
+ARGS="-engine postgres -host $PG_HOST -port $PG_PORT -region $AWS_REGION -user $PG_USER"
+if [ -n "$PG_SSL_MODE" ]; then
+  ARGS="$ARGS -ssl-mode $PG_SSL_MODE"
+fi
+if [ -n "$PG_SSL_CA" ]; then
+  ARGS="$ARGS -root-cert-file $PG_SSL_CA"
+fi
+
+PG_DSN="$(/workspace/bin/aws-rds-authenticator "$ARGS")"
 
 # Create the database if option is specified
 if [ "$1" = "-create-db" ]; then
