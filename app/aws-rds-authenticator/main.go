@@ -35,7 +35,7 @@ type config struct {
 func main() {
 	if err := run(); err != nil {
 		if !errors.Is(err, commands.ErrHelp) {
-			fmt.Println("ERROR", err)
+			fmt.Fprintln(os.Stderr, "ERROR", err)
 		}
 		os.Exit(1)
 	}

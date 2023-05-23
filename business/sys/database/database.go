@@ -82,7 +82,7 @@ func StatusCheck(ctx context.Context, db *sql.DB) error {
 		if pingError == nil {
 			break
 		}
-		fmt.Println(pingError)
+		fmt.Fprintln(os.Stderr, pingError)
 		time.Sleep(time.Duration(attempts) * 100 * time.Millisecond)
 		if ctx.Err() != nil {
 			return ctx.Err()
