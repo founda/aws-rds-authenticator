@@ -197,9 +197,6 @@ jobs:
           go-version-file: "./go.mod"
           cache-dependency-path: go.sum
 
-      - name: Install dependencies
-        run: go get .
-
       - name: Test with Go
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest
@@ -224,9 +221,6 @@ jobs:
       - staticcheck
       - version
       - test
-    strategy:
-      matrix:
-        target: [ "alpine", "bullseye", "scratch" ]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -249,11 +243,6 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # We will create a latest tag by default, and will add the suffix to latest as well, the `onlatest=true`.
-          # See: https://github.com/marketplace/actions/docker-metadata-action#flavor-input.
-          flavor: |
-            # Configure the global suffix
-            suffix=${{ fromJSON(format('["-{0}",""]', matrix.target))[matrix.target == 'scratch'] }},onlatest=true
           # Configure a tag of type semver, by default this would get the tag value from git, but as
           # we haven't created a release yet, we specify the value explicitly.
           # See: https://github.com/marketplace/actions/docker-metadata-action#typesemver.
@@ -268,68 +257,15 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: zarf/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
+          build-args: BUILD_REF=${{ needs.version.outputs.version }}${{ fromJSON(format('["-{0}",""]', github.ref_name))[github.ref_name == github.event.repository.default_branch] }}
           # Skip pushing images for workflows triggered by Dependabot.
           push: ${{ github.event_name != 'workflow_run' }}
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           target: ${{ matrix.target }}
-
-  docker-build-clients:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    needs:
-      - docker-build
-      - version
-    strategy:
-      matrix:
-        target: [ "postgres", "mysql" ]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.target }}
-          # Configure a tag of type semver, by default this would get the tag value from git, but as
-          # we haven't created a release yet, we specify the value explicitly.
-          # See: https://github.com/marketplace/actions/docker-metadata-action#typesemver.
-          # Note that for branch builds, we add the branch name in the tag as well, to avoid overwriting images.
-          # And we can't negate the `{{is_default_branch}}` expression, so we have to perform the "not default branch"
-          # check explicitly.
-          tags: |
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }},enable={{is_default_branch}}
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ github.ref_name != github.event.repository.default_branch }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./clients/${{ matrix.target }}
-          platforms: linux/amd64,linux/arm64
-          build-args: VERSION=${{ needs.version.outputs.version }}${{ fromJSON(format('["-{0}",""]', github.ref_name))[github.ref_name == github.event.repository.default_branch] }}
-          # Skip pushing images for workflows triggered by Dependabot.
-          push: ${{ github.event_name != 'workflow_run' }}
-          provenance: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
 
   release:
     runs-on: ubuntu-latest
@@ -343,7 +279,7 @@ jobs:
       issues: write
       pull-requests: write
     needs:
-      - docker-build-clients
+      - docker-build
     if: github.ref_name == github.event.repository.default_branch
     steps:
       - name: Checkout
