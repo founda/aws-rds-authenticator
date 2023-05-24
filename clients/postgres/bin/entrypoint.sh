@@ -72,7 +72,10 @@ if [ -n "$PG_SSL_CA" ]; then
   ARGS="$ARGS -root-cert-file $PG_SSL_CA"
 fi
 
-PG_DSN="$(/workspace/bin/aws-rds-authenticator "$ARGS")"
+# We should not quote ARGS here to avoid all arguments being passed as a single
+# string.
+# shellcheck disable=SC2086
+PG_DSN="$(/workspace/bin/aws-rds-authenticator $ARGS)"
 
 # Create the database if option is specified
 if [ "$1" = "-create-db" ]; then
