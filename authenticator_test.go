@@ -2,6 +2,7 @@ package authenticator_test
 
 import (
 	"bytes"
+	"net/url"
 	"os"
 	"testing"
 
@@ -24,32 +25,27 @@ func TestPrintsConnectionStringToWriter(t *testing.T) {
 		{
 			name: "postgres with database name",
 			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-database", "prod-test", "-ssl-mode", "verify-full", "-root-cert-file", tmpFile.Name()},
-			want: "user=postgres password=t0k3n host=rds.amazon.com port=5432 sslmode=verify-full dbname=prod-test sslrootcert=" + tmpFile.Name(),
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432/prod-test?sslmode=verify-full&sslrootcert=" + url.QueryEscape(tmpFile.Name()),
 		},
 		{
 			name: "postgres without database name",
 			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-ssl-mode", "verify-full", "-root-cert-file", tmpFile.Name()},
-			want: "user=postgres password=t0k3n host=rds.amazon.com port=5432 sslmode=verify-full sslrootcert=" + tmpFile.Name(),
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432?sslmode=verify-full&sslrootcert=" + url.QueryEscape(tmpFile.Name()),
 		},
 		{
 			name: "postgres without database name, disable ssl",
 			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-ssl-mode", "disable"},
-			want: "user=postgres password=t0k3n host=rds.amazon.com port=5432 sslmode=disable",
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432?sslmode=disable",
 		},
 		{
 			name: "postgres without database name, require ssl",
 			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-ssl-mode", "require"},
-			want: "user=postgres password=t0k3n host=rds.amazon.com port=5432 sslmode=require",
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432?sslmode=require",
 		},
 		{
 			name: "postgres without database name, verify-ca ssl",
 			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-ssl-mode", "verify-ca", "-root-cert-file", tmpFile.Name()},
-			want: "user=postgres password=t0k3n host=rds.amazon.com port=5432 sslmode=verify-ca sslrootcert=" + tmpFile.Name(),
-		},
-		{
-			name: "postgres without database name, verify-full ssl",
-			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-ssl-mode", "verify-full", "-root-cert-file", tmpFile.Name()},
-			want: "user=postgres password=t0k3n host=rds.amazon.com port=5432 sslmode=verify-full sslrootcert=" + tmpFile.Name(),
+			want: "postgres://postgres:t0k3n@rds.amazon.com:5432?sslmode=verify-ca&sslrootcert=" + url.QueryEscape(tmpFile.Name()),
 		},
 		{
 			name: "mysql with database name",

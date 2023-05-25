@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 
@@ -163,25 +164,23 @@ func (a authenticator) PrintConnectionString() error {
 
 	switch a.engine {
 	case "postgres":
-		params := []string{
-			fmt.Sprintf("user=%s", a.user),
-			fmt.Sprintf("password=%s", token),
-			fmt.Sprintf("host=%s", a.host),
-			fmt.Sprintf("port=%d", a.port),
-			fmt.Sprintf("sslmode=%s", a.sslMode),
-		}
-
-		if a.database != "" {
-			params = append(params, fmt.Sprintf("dbname=%s", a.database))
-		}
+		q := make(url.Values)
+		q.Set("sslmode", a.sslMode)
 
 		if a.sslMode == "verify-ca" || a.sslMode == "verify-full" {
-			params = append(params, fmt.Sprintf("sslrootcert=%s", a.rootCertFilePath))
+			q.Set("sslrootcert", a.rootCertFilePath)
 		}
 
-		dsn := strings.Join(params, " ")
+		u := url.URL{
+			Scheme:   "postgres",
+			User:     url.UserPassword(a.user, token),
+			Host:     fmt.Sprintf("%s:%d", a.host, a.port),
+			Path:     a.database,
+			RawQuery: q.Encode(),
+		}
 
-		fmt.Fprintf(a.output, "%s", dsn)
+		fmt.Fprintf(a.output, "%s", u.String())
+
 	case "mysql":
 		params := []string{
 			"allowCleartextPasswords=true",
