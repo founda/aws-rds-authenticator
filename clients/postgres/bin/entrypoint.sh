@@ -64,7 +64,10 @@ if [ -z "$PG_HOST" ] || [ -z "$PG_PORT" ] || [ -z "$AWS_REGION" ] || [ -z "$PG_U
 fi
 
 # Authenticate with AWS RDS and get the PostgreSQL DSN
-ARGS="-engine postgres -host $PG_HOST -port $PG_PORT -region $AWS_REGION -user $PG_USER"
+# Note: we connect to the default DB `postgres` as we are about to create `PG_DATABASE`.
+# When not specified, postgres tries to connect to a DB named after the username and since
+# that probably does not exist, the safe choice is to connect to `postgres` instead.
+ARGS="-engine postgres -host $PG_HOST -port $PG_PORT -region $AWS_REGION -user $PG_USER -database postgres"
 if [ -n "$PG_SSL_MODE" ]; then
   ARGS="$ARGS -ssl-mode $PG_SSL_MODE"
 fi
