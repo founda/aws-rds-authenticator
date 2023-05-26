@@ -1,3 +1,27 @@
+## [2.0.0](https://github.com/founda/aws-rds-authenticator/compare/v1.1.2...v2.0.0) (2023-05-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* Instead of a string of key/value pairs we now return a connection string.
+
+### Features
+
+* **pgclient:** add support for verify-ca ([93a44b4](https://github.com/founda/aws-rds-authenticator/commit/93a44b439328dd8735dd8051c0ab8d4862a55b86))
+
+
+### Bug Fixes
+
+* connect to the `postgres` database by default ([4c7657d](https://github.com/founda/aws-rds-authenticator/commit/4c7657dd7046932abb84058f0dcc3c9c70685a57))
+* prevent args being passed as single string ([1ef35d8](https://github.com/founda/aws-rds-authenticator/commit/1ef35d84ed45d1a998b404b65e27c47f323c512b))
+* remove committed binary ([d5f5654](https://github.com/founda/aws-rds-authenticator/commit/d5f565498eac6f1790a8cc44c8b59b5ce637bfd2))
+* return a connection string instead of the key/value pairs ([6ccf0c8](https://github.com/founda/aws-rds-authenticator/commit/6ccf0c8fbf4564f302e81dc2a1a0a1e3ec8bb671))
+
+
+### Dependencies and Other Build Updates
+
+* **readme:** update README ([f4a1f36](https://github.com/founda/aws-rds-authenticator/commit/f4a1f3699aca21f6200f15ac5c76bdd480a7362d))
+
 ## [1.1.2](https://github.com/founda/aws-rds-authenticator/compare/v1.1.1...v1.1.2) (2023-05-02)
 
 
