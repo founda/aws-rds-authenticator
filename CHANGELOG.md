@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/founda/aws-rds-authenticator/compare/v2.0.0...v2.0.1) (2023-05-31)
+
+
+### Bug Fixes
+
+* update module path to match major release ([ce9c8d2](https://github.com/founda/aws-rds-authenticator/commit/ce9c8d2e2c53e1dd39bb5eee17ed11a34e6add45))
+
 ## [2.0.0](https://github.com/founda/aws-rds-authenticator/compare/v1.1.2...v2.0.0) (2023-05-26)
 
 
