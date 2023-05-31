@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/founda/aws-rds-authenticator/pkg/authtoken"
+	"github.com/founda/aws-rds-authenticator/v2/pkg/authtoken"
 )
 
 type option func(*authenticator) error
