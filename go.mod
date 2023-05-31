@@ -1,4 +1,4 @@
-module github.com/founda/aws-rds-authenticator
+module github.com/founda/aws-rds-authenticator/v2
 
 go 1.20
 

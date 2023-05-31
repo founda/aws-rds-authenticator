@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	authenticator "github.com/founda/aws-rds-authenticator"
-	"github.com/founda/aws-rds-authenticator/pkg/authtoken/mock"
+	authenticator "github.com/founda/aws-rds-authenticator/v2"
+	"github.com/founda/aws-rds-authenticator/v2/pkg/authtoken/mock"
 )
 
 func TestPrintsConnectionStringToWriter(t *testing.T) {
