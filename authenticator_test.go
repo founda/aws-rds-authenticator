@@ -116,11 +116,6 @@ func TestMissingRequiredArgs(t *testing.T) {
 			want: "missing required user",
 		},
 		{
-			name: "missing region",
-			args: []string{"-host", "host", "-user", "user", "-database", "db"},
-			want: "missing required region",
-		},
-		{
 			name: "incorrect engine",
 			args: []string{"-host", "host", "-user", "user", "-region", "eu-west-1", "-database", "db", "-engine", "oracle"},
 			want: "invalid engine: must be postgres or mysql",

@@ -61,7 +61,7 @@ func FromArgs(args []string) option {
 		portPtr := fset.Int("port", 0, `Port number used for connecting to your DB instance
 			default postgres: 5432
 			default mysql: 3306`)
-		regionPtr := fset.String("region", "", "AWS Region where the database instance is running")
+		regionPtr := fset.String("region", "us-east-1", "AWS Region where the database instance is running")
 		userPtr := fset.String("user", "", "Database account that you want to access")
 		databasePtr := fset.String("database", "", "Database that you want to access (optional)")
 		enginePtr := fset.String("engine", "postgres", "Database engine that you want to access: postgres|mysql")
@@ -78,9 +78,6 @@ func FromArgs(args []string) option {
 		//TODO: add more validation
 		if *hostPtr == "" {
 			return errors.New("missing required host")
-		}
-		if *regionPtr == "" {
-			return errors.New("missing required region")
 		}
 		if *userPtr == "" {
 			return errors.New("missing required user")
@@ -198,10 +195,17 @@ func (a authenticator) PrintConnectionString() error {
 }
 
 func PrintConnectionString() {
-	tokenBuilder, err := authtoken.NewRDSTokenBuilder(context.TODO())
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	var tokenBuilder authtoken.Builder
+	var err error
+
+	if passwd := os.Getenv("PG_PASSWORD"); passwd != "" {
+		tokenBuilder = authtoken.NewTokenBuilder(passwd)
+	} else {
+		tokenBuilder, err = authtoken.NewRDSTokenBuilder(context.TODO())
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 
 	auth, err := NewAuthenticator(
