@@ -17,8 +17,24 @@ on:
   pull_request
 
 jobs:
-  check-dependabot:
+  # We'll save the PR number of the PR that trigger this workflow to a file
+  # and upload that for our triggered workflow to use. This number will be
+  # used as (part of) the Docker tags that we will publish from that workflow,
+  # see:
+  # https://github.com/GuillaumeFalourd/poc-github-actions/blob/24b54ae5395b4175a26b0005d43e1c607f361fea/.github/workflows/25-artifacts-between-workflows-1.yml
+  upload-pr-number:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      - run: echo "PR created by Dependabot"
+      - name: Save the PR number in an artifact
+        shell: bash
+        run: echo "$PR_NUMBER" > pr_number.txt
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+
+      - name: Upload the PR number
+        uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: ./pr_number.txt
+          retention-days: 1

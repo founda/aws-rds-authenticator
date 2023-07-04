@@ -20,6 +20,8 @@ env:
 # https://github.com/semantic-release/semantic-release/blob/4bddb37de2fc6743a82299e277d5852d153e2ba8/lib/git.js#L67
 on:
   push:
+    branches-ignore:
+      - 'dependabot/**'
   workflow_run:
     workflows: [ "Dependabot PR" ]
     types:
@@ -160,15 +162,37 @@ jobs:
             @semantic-release/exec \
             @semantic-release/git \
             conventional-changelog-conventionalcommits
+      # The following two steps only run if this workflow is triggered by
+      # Dependabot, in that case we download the artifact created by the
+      # `Dependabot PR` workflow. This artifact contains the PR number of
+      # the PR that Dependabot opened. We will use the number as (part of)
+      # the tags for our Docker images. We need this tag as we need to push
+      # our `aws-rds-authenticator` base-image also in the case of a workflow
+      # triggered by Dependabot. Our database client images depend on a
+      # published version of our base-image, otherwise they can't pull it.
+      # By using the PR number we guarantee we are using a unique tag per
+      # Dependabot-branch which also do not collide SemVer, so no risk of
+      # overwriting existing images.
+      - name: Download file containing the Dependabot PR number
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
+      - name: Read the PR number
+        id: pr_number_reader
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./pr_number/pr_number.txt
       - name: Get latest version
         id: version
-        if: ${{ (github.event_name != 'workflow_run') }}
         run: |
           if ${{ (github.event_name != 'workflow_run') }}; then
             semantic-release --dry-run --branches main,${{ github.ref_name }} --no-ci --debug
             cat version.env >> $GITHUB_OUTPUT
           else
-            echo "VERSION=0.0.0" >> $GITHUB_OUTPUT  
+            echo "VERSION=dependabot-${{ steps.pr_number_reader.outputs.content }}" | tr -d '\n' >> $GITHUB_OUTPUT  
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.FOUNDA_DEV_PAT }}
@@ -249,28 +273,39 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # We will create a latest tag by default, and will add the suffix to latest as well, the `onlatest=true`.
-          # See: https://github.com/marketplace/actions/docker-metadata-action#flavor-input.
+          # We will not create a `latest` tag by default, it does not seem to work:
+          # it adds the `latest` tag also on branch-builds, which is undesired.
+          # We'll configure `latest` ourselves, see:
+          # https://github.com/marketplace/actions/docker-metadata-action#flavor-input.
           flavor: |
+            latest=false
             # Configure the global suffix
             suffix=${{ fromJSON(format('["-{0}",""]', matrix.target))[matrix.target == 'scratch'] }},onlatest=true
-          # Configure a tag of type semver, by default this would get the tag value from git, but as
-          # we haven't created a release yet, we specify the value explicitly.
-          # See: https://github.com/marketplace/actions/docker-metadata-action#typesemver.
-          # Note that for branch builds, we add the branch name in the tag as well, to avoid overwriting images.
-          # And we can't negate the `{{is_default_branch}}` expression, so we have to perform the "not default branch"
-          # check explicitly.
+          # Configure a tag of type `raw`, so we have no constraints on the format,
+          # as our Dependabot builds do not follow SemVer when creating their tags.
+          # See: https://github.com/marketplace/actions/docker-metadata-action#typeraw.
+          # Note that builds triggered by Dependabot can also run from `main`, so our
+          # check if we run on `main` is no longer enough to alone determine which
+          # tags to publish. We add a second condition to check which event triggered
+          # this build, when we see `workflow_run` we treat it always as a branch build
+          # even if triggered on `main`.
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }},enable={{is_default_branch}}
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ github.ref_name != github.event.repository.default_branch }}
+            # Push `latest` when on the default branch, but not when triggered
+            # via Dependabot.
+            type=raw,value=latest,enable=${{ (github.ref_name == github.event.repository.default_branch) && (github.event_name != 'workflow_run') }}
+            # Push version without branch suffix when on the default branch, or
+            # when triggered via Dependabot. The tag is then already unique, so
+            # no need for another suffix.
+            type=raw,value=${{ needs.version.outputs.version }},enable=${{ (github.ref_name == github.event.repository.default_branch) || (github.event_name == 'workflow_run') }}
+            # Push the version with branch suffix otherwise.
+            type=raw,value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ (github.ref_name != github.event.repository.default_branch) && (github.event_name != 'workflow_run') }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          # Skip pushing images for workflows triggered by Dependabot.
-          push: ${{ github.event_name != 'workflow_run' }}
+          push: true
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -309,15 +344,24 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.target }}
-          # Configure a tag of type semver, by default this would get the tag value from git, but as
-          # we haven't created a release yet, we specify the value explicitly.
-          # See: https://github.com/marketplace/actions/docker-metadata-action#typesemver.
-          # Note that for branch builds, we add the branch name in the tag as well, to avoid overwriting images.
-          # And we can't negate the `{{is_default_branch}}` expression, so we have to perform the "not default branch"
-          # check explicitly.
+          # Configure a tag of type `raw`, so we have no constraints on the format,
+          # as our Dependabot builds do not follow SemVer when creating their tags.
+          # See: https://github.com/marketplace/actions/docker-metadata-action#typeraw.
+          # Note that builds triggered by Dependabot can also run from `main`, so our
+          # check if we run on `main` is no longer enough to alone determine which
+          # tags to publish. We add a second condition to check which event triggered
+          # this build, when we see `workflow_run` we treat it always as a branch build
+          # even if triggered on `main`.
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }},enable={{is_default_branch}}
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ github.ref_name != github.event.repository.default_branch }}
+            # Push `latest` when on the default branch, but not when triggered
+            # via Dependabot.
+            type=raw,value=latest,enable=${{ (github.ref_name == github.event.repository.default_branch) && (github.event_name != 'workflow_run') }}
+            # Push version without branch suffix when on the default branch, or
+            # when triggered via Dependabot. The tag is then already unique, so
+            # no need for another suffix.
+            type=raw,value=${{ needs.version.outputs.version }},enable=${{ (github.ref_name == github.event.repository.default_branch) || (github.event_name == 'workflow_run') }}
+            # Push the version with branch suffix otherwise.
+            type=raw,value=${{ needs.version.outputs.version }}-{{branch}},enable=${{ (github.ref_name != github.event.repository.default_branch) && (github.event_name != 'workflow_run') }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -325,8 +369,7 @@ jobs:
           context: ./clients/${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
           build-args: VERSION=${{ needs.version.outputs.version }}${{ fromJSON(format('["-{0}",""]', github.ref_name))[github.ref_name == github.event.repository.default_branch] }}
-          # Skip pushing images for workflows triggered by Dependabot.
-          push: ${{ github.event_name != 'workflow_run' }}
+          push: true
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
