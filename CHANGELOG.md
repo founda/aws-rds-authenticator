@@ -1,3 +1,10 @@
+## [2.0.4](https://github.com/founda/aws-rds-authenticator/compare/v2.0.3...v2.0.4) (2023-07-05)
+
+
+### Bug Fixes
+
+* use PR number as tag for Dependabot-trigger branch builds ([c298f6c](https://github.com/founda/aws-rds-authenticator/commit/c298f6c9bac2cfd74464c7c3136b5992ed5d619a))
+
 ## [2.0.3](https://github.com/founda/aws-rds-authenticator/compare/v2.0.2...v2.0.3) (2023-07-04)
 
 
