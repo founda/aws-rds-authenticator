@@ -1,3 +1,10 @@
+## [2.1.0](https://github.com/founda/aws-rds-authenticator/compare/v2.0.4...v2.1.0) (2023-07-25)
+
+
+### Features
+
+* add the ability to skip token generation ([d742e18](https://github.com/founda/aws-rds-authenticator/commit/d742e18b8306884c0b9b4ca6ce55492e490e8ee9))
+
 ## [2.0.4](https://github.com/founda/aws-rds-authenticator/compare/v2.0.3...v2.0.4) (2023-07-05)
 
 
