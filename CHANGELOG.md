@@ -1,3 +1,10 @@
+## [2.1.7](https://github.com/founda/aws-rds-authenticator/compare/v2.1.6...v2.1.7) (2024-03-20)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump mikepenz/action-junit-report from 3 to 4 ([9b6e6bb](https://github.com/founda/aws-rds-authenticator/commit/9b6e6bbef4d23a399608b2805b960aa25fe9c23a))
+
 ## [2.1.6](https://github.com/founda/aws-rds-authenticator/compare/v2.1.5...v2.1.6) (2024-03-20)
 
 
