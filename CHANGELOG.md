@@ -1,3 +1,10 @@
+## [2.1.8](https://github.com/founda/aws-rds-authenticator/compare/v2.1.7...v2.1.8) (2024-03-20)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump actions/checkout from 3 to 4 ([bb9e73f](https://github.com/founda/aws-rds-authenticator/commit/bb9e73f2310c7fb5dadb12cefff83d1303eb8db7))
+
 ## [2.1.7](https://github.com/founda/aws-rds-authenticator/compare/v2.1.6...v2.1.7) (2024-03-20)
 
 
