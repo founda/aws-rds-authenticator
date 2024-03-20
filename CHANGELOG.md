@@ -1,3 +1,10 @@
+## [2.1.5](https://github.com/founda/aws-rds-authenticator/compare/v2.1.4...v2.1.5) (2024-03-20)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump docker/setup-buildx-action from 2 to 3 ([7043800](https://github.com/founda/aws-rds-authenticator/commit/704380022aa67d34fcd2af468acacc940fd1673a))
+
 ## [2.1.4](https://github.com/founda/aws-rds-authenticator/compare/v2.1.3...v2.1.4) (2024-03-20)
 
 
