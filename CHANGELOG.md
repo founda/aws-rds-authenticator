@@ -1,3 +1,10 @@
+## [2.1.4](https://github.com/founda/aws-rds-authenticator/compare/v2.1.3...v2.1.4) (2024-03-20)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump docker/login-action from 2 to 3 ([f18d03e](https://github.com/founda/aws-rds-authenticator/commit/f18d03e1c8c5e7c657be121a13134b6a46cb46b7))
+
 ## [2.1.3](https://github.com/founda/aws-rds-authenticator/compare/v2.1.2...v2.1.3) (2024-03-20)
 
 
