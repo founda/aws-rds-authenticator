@@ -1,3 +1,10 @@
+## [2.1.6](https://github.com/founda/aws-rds-authenticator/compare/v2.1.5...v2.1.6) (2024-03-20)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump docker/metadata-action from 4 to 5 ([ab1e896](https://github.com/founda/aws-rds-authenticator/commit/ab1e8969cabbac1f98f0151b425c48d2438b5ac9))
+
 ## [2.1.5](https://github.com/founda/aws-rds-authenticator/compare/v2.1.4...v2.1.5) (2024-03-20)
 
 
