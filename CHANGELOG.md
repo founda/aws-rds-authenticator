@@ -1,3 +1,11 @@
+## [2.1.17](https://github.com/founda/aws-rds-authenticator/compare/v2.1.16...v2.1.17) (2024-03-21)
+
+
+### Bug Fixes
+
+* remove hard-coded architecture ([c94bdf0](https://github.com/founda/aws-rds-authenticator/commit/c94bdf069b93f93838f4faa3c16523cb153e4b4e))
+* use an explicit version of go in the pipelines ([b2d470b](https://github.com/founda/aws-rds-authenticator/commit/b2d470b30eff29cf20d7dc9169a38c9d442de946))
+
 ## [2.1.16](https://github.com/founda/aws-rds-authenticator/compare/v2.1.15...v2.1.16) (2024-03-21)
 
 
