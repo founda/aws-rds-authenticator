@@ -1,3 +1,10 @@
+## [2.1.9](https://github.com/founda/aws-rds-authenticator/compare/v2.1.8...v2.1.9) (2024-03-21)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump github.com/stretchr/testify from 1.8.4 to 1.9.0 ([ae02a38](https://github.com/founda/aws-rds-authenticator/commit/ae02a38b7c7610559847d7d5840c6c3233e84267))
+
 ## [2.1.8](https://github.com/founda/aws-rds-authenticator/compare/v2.1.7...v2.1.8) (2024-03-20)
 
 
