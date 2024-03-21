@@ -1,3 +1,10 @@
+## [2.1.14](https://github.com/founda/aws-rds-authenticator/compare/v2.1.13...v2.1.14) (2024-03-21)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump dawidd6/action-download-artifact from 2 to 3 ([4953549](https://github.com/founda/aws-rds-authenticator/commit/49535491c8dcef92f63c0cca3b66f3992b8aa404))
+
 ## [2.1.13](https://github.com/founda/aws-rds-authenticator/compare/v2.1.12...v2.1.13) (2024-03-21)
 
 
