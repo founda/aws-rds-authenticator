@@ -1,3 +1,10 @@
+## [2.1.13](https://github.com/founda/aws-rds-authenticator/compare/v2.1.12...v2.1.13) (2024-03-21)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump actions/setup-go from 4 to 5 ([adc1b24](https://github.com/founda/aws-rds-authenticator/commit/adc1b2486ab3e4c429e33e051be4c79238716df8))
+
 ## [2.1.12](https://github.com/founda/aws-rds-authenticator/compare/v2.1.11...v2.1.12) (2024-03-21)
 
 
