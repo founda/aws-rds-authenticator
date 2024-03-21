@@ -1,9 +1,6 @@
 # syntax=docker/dockerfile:1.4
 FROM golang:1.20-alpine AS builder
 
-ARG GOOS=linux
-ARG GOARCH=amd64
-
 WORKDIR /workspace
 
 COPY go.mod go.sum ./
@@ -13,7 +10,7 @@ RUN go mod download
 COPY . .
 
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=${GOOS} GOARCH=${GOARCH} go build -o . ./...
+RUN CGO_ENABLED=0 go build -o . ./...
 
 # scratch image
 FROM scratch AS scratch
