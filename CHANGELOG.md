@@ -1,3 +1,10 @@
+## [2.1.11](https://github.com/founda/aws-rds-authenticator/compare/v2.1.10...v2.1.11) (2024-03-21)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump actions/upload-artifact from 3 to 4 ([43a5e1e](https://github.com/founda/aws-rds-authenticator/commit/43a5e1e192fd39a1bc33489683ebefcba0105613))
+
 ## [2.1.10](https://github.com/founda/aws-rds-authenticator/compare/v2.1.9...v2.1.10) (2024-03-21)
 
 
