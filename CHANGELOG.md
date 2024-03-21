@@ -1,3 +1,10 @@
+## [2.1.12](https://github.com/founda/aws-rds-authenticator/compare/v2.1.11...v2.1.12) (2024-03-21)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump docker/setup-qemu-action from 2 to 3 ([81aafb8](https://github.com/founda/aws-rds-authenticator/commit/81aafb8afd815a6ec4bb86f5634aa5456b0d2e81))
+
 ## [2.1.11](https://github.com/founda/aws-rds-authenticator/compare/v2.1.10...v2.1.11) (2024-03-21)
 
 
