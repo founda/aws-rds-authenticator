@@ -1,3 +1,10 @@
+## [2.1.19](https://github.com/founda/aws-rds-authenticator/compare/v2.1.18...v2.1.19) (2024-03-25)
+
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump dominikh/staticcheck-action from 1.3.0 to 1.3.1 ([f05a0fd](https://github.com/founda/aws-rds-authenticator/commit/f05a0fdb8c98a6b1baa5df639b8ccde63065e605))
+
 ## [2.1.18](https://github.com/founda/aws-rds-authenticator/compare/v2.1.17...v2.1.18) (2024-03-25)
 
 
