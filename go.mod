@@ -3,7 +3,7 @@ module github.com/founda/aws-rds-authenticator/v2
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.26.1
+	github.com/aws/aws-sdk-go-v2 v1.27.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.13
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.4.5
 	github.com/stretchr/testify v1.9.0
