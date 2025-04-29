@@ -1,3 +1,9 @@
+## [2.1.24](https://github.com/founda/aws-rds-authenticator/compare/v2.1.23...v2.1.24) (2025-04-29)
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump github.com/aws/aws-sdk-go-v2/config ([ebfc92c](https://github.com/founda/aws-rds-authenticator/commit/ebfc92c1f98d3288ad50571ac59144e25ffc366a))
+
 ## [2.1.23](https://github.com/founda/aws-rds-authenticator/compare/v2.1.22...v2.1.23) (2024-06-10)
 
 ### Dependencies and Other Build Updates
