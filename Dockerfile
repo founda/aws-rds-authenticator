@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM golang:1.20-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /workspace
 
@@ -34,7 +34,7 @@ USER app
 ENTRYPOINT [ "./aws-rds-authenticator" ]
 
 # alpine image
-FROM alpine:3.17 AS alpine
+FROM alpine:3.21 AS alpine
 
 RUN addgroup --system app --gid 888 && \
     adduser --system --no-create-home --uid 888 --ingroup app app
