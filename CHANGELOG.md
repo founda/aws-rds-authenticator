@@ -1,3 +1,11 @@
+## [2.1.27](https://github.com/founda/aws-rds-authenticator/compare/v2.1.26...v2.1.27) (2025-05-01)
+
+### Dependencies and Other Build Updates
+
+* **deps:** update base images ([c09c9fe](https://github.com/founda/aws-rds-authenticator/commit/c09c9fe660ea06820fd4319459ec2570ce4a355d))
+* **deps:** update Go version in pipeline ([291b5dd](https://github.com/founda/aws-rds-authenticator/commit/291b5dd9ff41341d7521acdf12cc073565ce5db6))
+* **deps:** update staticcheck ([ae64ce5](https://github.com/founda/aws-rds-authenticator/commit/ae64ce5e0d1e556a8ef8df8a71b1a552e5e1ffd3))
+
 ## [2.1.26](https://github.com/founda/aws-rds-authenticator/compare/v2.1.25...v2.1.26) (2025-04-29)
 
 ### Dependencies and Other Build Updates
