@@ -174,25 +174,25 @@ jobs:
       # Dependabot-branch which also do not collide SemVer, so no risk of
       # overwriting existing images.
       - name: Download file containing the Dependabot PR number
-        if: ${{ github.event_name == 'workflow_run' }}
+        if: ${{ (github.event_name == 'workflow_run') && (github.actor == 'dependabot[bot]') }}
         uses: dawidd6/action-download-artifact@v9
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_id: ${{ github.event.workflow_run.id }}
       - name: Read the PR number
         id: pr_number_reader
-        if: ${{ github.event_name == 'workflow_run' }}
+        if: ${{ (github.event_name == 'workflow_run') && (github.actor == 'dependabot[bot]') }}
         uses: juliangruber/read-file-action@v1
         with:
           path: ./pr_number/pr_number.txt
       - name: Get latest version
         id: version
         run: |
-          if ${{ (github.event_name != 'workflow_run') }}; then
+          if ${{ (github.event_name == 'workflow_run') && (github.actor == 'dependabot[bot]') }}; then
+            echo "VERSION=dependabot-${{ steps.pr_number_reader.outputs.content }}" >> $GITHUB_OUTPUT
+          else
             semantic-release --dry-run --branches main,${{ github.ref_name }} --no-ci --debug
             cat version.env >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=dependabot-${{ steps.pr_number_reader.outputs.content }}" | tr -d '\n' >> $GITHUB_OUTPUT  
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.FOUNDA_DEV_PAT }}
