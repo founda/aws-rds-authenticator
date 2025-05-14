@@ -1,3 +1,9 @@
+## [2.1.28](https://github.com/founda/aws-rds-authenticator/compare/v2.1.27...v2.1.28) (2025-05-14)
+
+### Bug Fixes
+
+* **ci:** only read PR number if dependabot triggers workflow ([dd3d4e0](https://github.com/founda/aws-rds-authenticator/commit/dd3d4e009a0b53fa6442775319f91f33a51d5492))
+
 ## [2.1.27](https://github.com/founda/aws-rds-authenticator/compare/v2.1.26...v2.1.27) (2025-05-01)
 
 ### Dependencies and Other Build Updates
