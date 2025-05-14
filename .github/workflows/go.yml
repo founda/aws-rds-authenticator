@@ -230,7 +230,7 @@ jobs:
           go test -v ./... | go-junit-report -iocopy -out report.xml -set-exit-code
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         if: always()
         with:
           report_paths: report.xml
