@@ -1,7 +1,7 @@
 ARG VERSION=latest
 FROM ghcr.io/founda/aws-rds-authenticator:$VERSION-alpine AS aws-rds-authenticator
 
-FROM alpine:3.21
+FROM alpine:3.23
 RUN apk --no-cache add postgresql-client
 
 WORKDIR /workspace
