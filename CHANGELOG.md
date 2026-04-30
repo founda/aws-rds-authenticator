@@ -1,3 +1,9 @@
+## [2.1.37](https://github.com/founda/aws-rds-authenticator/compare/v2.1.36...v2.1.37) (2026-04-30)
+
+### Dependencies and Other Build Updates
+
+* **deps:** bump actions/setup-node from 4 to 6 ([29bc03c](https://github.com/founda/aws-rds-authenticator/commit/29bc03c5ed8839c4d153347f0d551dc673c7e625))
+
 ## [2.1.36](https://github.com/founda/aws-rds-authenticator/compare/v2.1.35...v2.1.36) (2026-04-30)
 
 ### Dependencies and Other Build Updates
