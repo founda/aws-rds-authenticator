@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.7
 	github.com/aws/aws-sdk-go-v2/config v1.32.17
-	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.14
+	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.23
 	github.com/stretchr/testify v1.11.1
 )
 
