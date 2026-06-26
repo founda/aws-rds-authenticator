@@ -25,6 +25,7 @@ type authenticator struct {
 	database         string
 	sslMode          string
 	rootCertFilePath string
+	tokenOnly        bool
 	authTokenBuilder authtoken.Builder
 }
 
@@ -69,6 +70,7 @@ func FromArgs(args []string) option {
 			postgres: disable|require|verify-ca|verify-full (default: verify-ca)
 			mysql: DISABLED|PREFERRED|REQUIRED|VERIFY_CA (default: VERIFY_CA)`)
 		rootCertFilePathPtr := fset.String("root-cert-file", "", "Path to the root certificate file")
+		tokenOnlyPtr := fset.Bool("token-only", false, "Print only the authentication token/password instead of the full connection string")
 
 		err := fset.Parse(args)
 		if err != nil {
@@ -139,6 +141,7 @@ func FromArgs(args []string) option {
 		a.engine = *enginePtr
 		a.sslMode = *sslModePtr
 		a.rootCertFilePath = *rootCertFilePathPtr
+		a.tokenOnly = *tokenOnlyPtr
 
 		return nil
 	}
@@ -157,6 +160,11 @@ func (a authenticator) PrintConnectionString() error {
 	token, err := a.authTokenBuilder.BuildToken(context.TODO(), endpoint, a.region, a.user)
 	if err != nil {
 		return err
+	}
+
+	if a.tokenOnly {
+		fmt.Fprintf(a.output, "%s", token)
+		return nil
 	}
 
 	switch a.engine {
