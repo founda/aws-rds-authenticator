@@ -151,3 +151,128 @@ func TestMissingRequiredArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestPrintsClientCertificateConnectionString(t *testing.T) {
+	t.Parallel()
+
+	tmpFile, err := os.CreateTemp("", "aws-rds-authenticator-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tmpFile.Close()
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "postgres with client certificate",
+			args: []string{"-host", "cnpg-rw.cnpg.svc", "-user", "dicom-job-manager", "-database", "dicom_job_manager", "-ssl-mode", "verify-full", "-root-cert-file", tmpFile.Name(), "-ssl-cert", tmpFile.Name(), "-ssl-key", tmpFile.Name()},
+			want: "postgres://dicom-job-manager@cnpg-rw.cnpg.svc:5432/dicom_job_manager?sslcert=" + url.QueryEscape(tmpFile.Name()) + "&sslkey=" + url.QueryEscape(tmpFile.Name()) + "&sslmode=verify-full&sslrootcert=" + url.QueryEscape(tmpFile.Name()),
+		},
+		{
+			name: "postgres with client certificate, no database name",
+			args: []string{"-host", "cnpg-rw.cnpg.svc", "-user", "dicom-job-manager", "-ssl-mode", "verify-full", "-root-cert-file", tmpFile.Name(), "-ssl-cert", tmpFile.Name(), "-ssl-key", tmpFile.Name()},
+			want: "postgres://dicom-job-manager@cnpg-rw.cnpg.svc:5432?sslcert=" + url.QueryEscape(tmpFile.Name()) + "&sslkey=" + url.QueryEscape(tmpFile.Name()) + "&sslmode=verify-full&sslrootcert=" + url.QueryEscape(tmpFile.Name()),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fakeTerminal := &bytes.Buffer{}
+
+			auth, err := authenticator.NewAuthenticator(
+				authenticator.WithOutput(fakeTerminal),
+				authenticator.FromArgs(tt.args),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = auth.PrintConnectionString()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			got := fakeTerminal.String()
+			if tt.want != got {
+				t.Errorf("want %s, got %s", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestClientCertificateValidation(t *testing.T) {
+	t.Parallel()
+
+	tmpFile, err := os.CreateTemp("", "aws-rds-authenticator-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tmpFile.Close()
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "ssl-cert without ssl-key",
+			args: []string{"-host", "host", "-user", "user", "-ssl-mode", "require", "-ssl-cert", tmpFile.Name()},
+			want: "ssl-cert and ssl-key must be provided together",
+		},
+		{
+			name: "client certificate with mysql",
+			args: []string{"-engine", "mysql", "-host", "host", "-user", "user", "-ssl-mode", "REQUIRED", "-ssl-cert", tmpFile.Name(), "-ssl-key", tmpFile.Name()},
+			want: "client certificate authentication is only supported for engine postgres",
+		},
+		{
+			name: "client certificate with ssl disabled",
+			args: []string{"-host", "host", "-user", "user", "-ssl-mode", "disable", "-ssl-cert", tmpFile.Name(), "-ssl-key", tmpFile.Name()},
+			want: `client certificate authentication requires an ssl-mode other than "disable"`,
+		},
+		{
+			name: "missing client certificate file",
+			args: []string{"-host", "host", "-user", "user", "-ssl-mode", "require", "-ssl-cert", "/does/not/exist.crt", "-ssl-key", tmpFile.Name()},
+			want: "client certificate file path does not exist: /does/not/exist.crt",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, gotError := authenticator.NewAuthenticator(
+				authenticator.FromArgs(tt.args),
+			)
+			if gotError == nil {
+				t.Fatalf("want error %q, got none", tt.want)
+			}
+			if got := gotError.Error(); tt.want != got {
+				t.Errorf("want %q\ngot %q", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestMissingAuthTokenBuilder(t *testing.T) {
+	t.Parallel()
+
+	auth, err := authenticator.NewAuthenticator(
+		authenticator.WithOutput(&bytes.Buffer{}),
+		authenticator.FromArgs([]string{"-host", "host", "-user", "user", "-ssl-mode", "require"}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	gotError := auth.PrintConnectionString()
+	if gotError == nil {
+		t.Fatal("want an error, got none")
+	}
+	if want := "no auth token builder configured"; gotError.Error() != want {
+		t.Errorf("want %q, got %q", want, gotError.Error())
+	}
+}

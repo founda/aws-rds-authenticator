@@ -25,6 +25,8 @@ type authenticator struct {
 	database         string
 	sslMode          string
 	rootCertFilePath string
+	sslCertFilePath  string
+	sslKeyFilePath   string
 	authTokenBuilder authtoken.Builder
 }
 
@@ -69,6 +71,8 @@ func FromArgs(args []string) option {
 			postgres: disable|require|verify-ca|verify-full (default: verify-ca)
 			mysql: DISABLED|PREFERRED|REQUIRED|VERIFY_CA (default: VERIFY_CA)`)
 		rootCertFilePathPtr := fset.String("root-cert-file", "", "Path to the root certificate file")
+		sslCertFilePathPtr := fset.String("ssl-cert", "", "Path to the client certificate file")
+		sslKeyFilePathPtr := fset.String("ssl-key", "", "Path to the client certificate key file")
 
 		err := fset.Parse(args)
 		if err != nil {
@@ -131,6 +135,27 @@ func FromArgs(args []string) option {
 			}
 		}
 
+		if (*sslCertFilePathPtr == "") != (*sslKeyFilePathPtr == "") {
+			return errors.New("ssl-cert and ssl-key must be provided together")
+		}
+
+		if *sslCertFilePathPtr != "" {
+			if *enginePtr != "postgres" {
+				return errors.New("client certificate authentication is only supported for engine postgres")
+			}
+			if *sslModePtr == "disable" {
+				return errors.New(`client certificate authentication requires an ssl-mode other than "disable"`)
+			}
+			for _, path := range []string{*sslCertFilePathPtr, *sslKeyFilePathPtr} {
+				if _, err := os.Stat(path); err != nil {
+					if os.IsNotExist(err) {
+						return fmt.Errorf("client certificate file path does not exist: %s", path)
+					}
+					return fmt.Errorf("error checking for client certificate file: %v", err)
+				}
+			}
+		}
+
 		a.host = *hostPtr
 		a.port = *portPtr
 		a.region = *regionPtr
@@ -139,6 +164,8 @@ func FromArgs(args []string) option {
 		a.engine = *enginePtr
 		a.sslMode = *sslModePtr
 		a.rootCertFilePath = *rootCertFilePathPtr
+		a.sslCertFilePath = *sslCertFilePathPtr
+		a.sslKeyFilePath = *sslKeyFilePathPtr
 
 		return nil
 	}
@@ -151,12 +178,26 @@ func WithAuthTokenBuilder(authTokenBuilder authtoken.Builder) option {
 	}
 }
 
+func (a authenticator) certAuth() bool {
+	return a.sslCertFilePath != "" && a.sslKeyFilePath != ""
+}
+
 func (a authenticator) PrintConnectionString() error {
 	endpoint := fmt.Sprintf("%s:%d", a.host, a.port)
 
-	token, err := a.authTokenBuilder.BuildToken(context.TODO(), endpoint, a.region, a.user)
-	if err != nil {
-		return err
+	var token string
+
+	if !a.certAuth() {
+		if a.authTokenBuilder == nil {
+			return errors.New("no auth token builder configured")
+		}
+
+		var err error
+
+		token, err = a.authTokenBuilder.BuildToken(context.TODO(), endpoint, a.region, a.user)
+		if err != nil {
+			return err
+		}
 	}
 
 	switch a.engine {
@@ -168,9 +209,17 @@ func (a authenticator) PrintConnectionString() error {
 			q.Set("sslrootcert", a.rootCertFilePath)
 		}
 
+		userInfo := url.UserPassword(a.user, token)
+
+		if a.certAuth() {
+			q.Set("sslcert", a.sslCertFilePath)
+			q.Set("sslkey", a.sslKeyFilePath)
+			userInfo = url.User(a.user)
+		}
+
 		u := url.URL{
 			Scheme:   "postgres",
-			User:     url.UserPassword(a.user, token),
+			User:     userInfo,
 			Host:     fmt.Sprintf("%s:%d", a.host, a.port),
 			Path:     a.database,
 			RawQuery: q.Encode(),
@@ -195,26 +244,31 @@ func (a authenticator) PrintConnectionString() error {
 }
 
 func PrintConnectionString() {
-	var tokenBuilder authtoken.Builder
-	var err error
-
-	if passwd := os.Getenv("PG_PASSWORD"); passwd != "" {
-		tokenBuilder = authtoken.NewTokenBuilder(passwd)
-	} else {
-		tokenBuilder, err = authtoken.NewRDSTokenBuilder(context.TODO())
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	}
-
 	auth, err := NewAuthenticator(
 		FromArgs(os.Args[1:]),
-		WithAuthTokenBuilder(tokenBuilder),
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+
+	if !auth.certAuth() {
+		var tokenBuilder authtoken.Builder
+
+		if passwd := os.Getenv("PG_PASSWORD"); passwd != "" {
+			tokenBuilder = authtoken.NewTokenBuilder(passwd)
+		} else {
+			tokenBuilder, err = authtoken.NewRDSTokenBuilder(context.TODO())
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}
+
+		if err := WithAuthTokenBuilder(tokenBuilder)(&auth); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 
 	err = auth.PrintConnectionString()
