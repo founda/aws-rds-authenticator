@@ -17,11 +17,18 @@ if [ $# -eq 0 ]; then
     AWS_REGION  AWS region where the RDS instance is located
     PG_SSL_MODE (optional) PostgreSQL SSL mode (default: verify-ca)
     PG_SSL_CA   (optional) PostgreSQL SSL CA certificate file path (required if PG_SSL_MODE is verify-ca or verify-full)
+    PG_SSL_CERT (optional) TLS client certificate file path, authenticates with a certificate instead of an auth token
+    PG_SSL_KEY  (optional) TLS client certificate key file path, required with PG_SSL_CERT
 
   Examples:
     ./entrypoint.sh \"SELECT * FROM my_table\"
     ./entrypoint.sh -create-db \"SELECT * FROM my_table\""
   exit 0
+fi
+
+CERT_ARGS=""
+if [ -n "$PG_SSL_CERT" ] && [ -n "$PG_SSL_KEY" ]; then
+  CERT_ARGS="-ssl-cert $PG_SSL_CERT -ssl-key $PG_SSL_KEY"
 fi
 
 # Required environment variables
@@ -73,6 +80,9 @@ if [ -n "$PG_SSL_MODE" ]; then
 fi
 if [ -n "$PG_SSL_CA" ]; then
   ARGS="$ARGS -root-cert-file $PG_SSL_CA"
+fi
+if [ -n "$CERT_ARGS" ]; then
+  ARGS="$ARGS $CERT_ARGS"
 fi
 
 # We should not quote ARGS here to avoid all arguments being passed as a single
