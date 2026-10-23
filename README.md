@@ -37,16 +37,29 @@ Usage of aws-rds-authenticator:
       SSL mode to connect to the database instance.
             postgres: disable|require|verify-ca|verify-full (default: verify-ca)
             mysql: DISABLED|PREFERRED|REQUIRED|VERIFY_CA (default: VERIFY_CA)
+  -token-only
+      Print only the authentication token/password instead of the full connection string
   -user string
       Database account that you want to access
+```
+
+By default the tool prints a full connection string (DSN). Pass `-token-only` to print just the
+temporary password, which is handy for tools that expect a password on its own:
+
+```bash
+$ aws-rds-authenticator -engine postgres -host rds.amazon.com -port 5432 -user postgres -database prod-db -region us-east-1 -token-only
+<temporary-password>
 ```
 
 For example, if you want to connect to a PostgreSQL database instance running in the `us-east-1` region, you can use the following command:
 
 ```bash
 $ aws-rds-authenticator -engine postgres -host rds.amazon.com -port 5432 -user postgres -database prod-db -region us-east-1
-<temporary-password>
+postgres://postgres:<temporary-password>@rds.amazon.com:5432/prod-db?sslmode=verify-ca&sslrootcert=...
 ```
+
+This prints a full connection string (DSN) with the temporary password embedded. If you only want the
+temporary password itself, use the `-token-only` flag (see below).
 
 ## Authentication
 

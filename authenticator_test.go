@@ -67,6 +67,16 @@ func TestPrintsConnectionStringToWriter(t *testing.T) {
 			args: []string{"-engine", "mysql", "-host", "rds.amazon.com", "-user", "maria", "-region", "eu-west-1", "-ssl-mode", "DISABLED"},
 			want: "maria:t0k3n@tcp(rds.amazon.com:3306)/?allowCleartextPasswords=true&ssl-mode=DISABLED",
 		},
+		{
+			name: "postgres token only",
+			args: []string{"-host", "rds.amazon.com", "-user", "postgres", "-region", "eu-west-1", "-ssl-mode", "disable", "-token-only"},
+			want: "t0k3n",
+		},
+		{
+			name: "mysql token only",
+			args: []string{"-engine", "mysql", "-host", "rds.amazon.com", "-user", "maria", "-region", "eu-west-1", "-ssl-mode", "DISABLED", "-token-only"},
+			want: "t0k3n",
+		},
 	}
 
 	for _, tt := range tests {
